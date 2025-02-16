@@ -75,7 +75,6 @@ def main():
     args = parser.parse_args()
     
     if args.create:
-        print(f"Création d'un point d'acces wifi sur l'interface {args.interface}")
         create_access_point(args.interface)
     
     if args.capture:

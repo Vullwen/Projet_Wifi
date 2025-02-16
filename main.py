@@ -2,6 +2,7 @@ import subprocess
 import sys
 import argparse
 from scapy.all import *
+import threading
 
 def create_access_point(interface):
     print(f"Création d'un point d'acces wifi sur l'interface {interface}")
@@ -49,23 +50,22 @@ dhcp-range=192.168.150.10,192.168.150.50,255.255.255.0,12h
         
     
 
-def capture_packets(interface):
-    print(f"Capture de paquets sur l'interface {interface}")
-    packets = sniff(iface=interface, count=10)
-    print(f"Capture de {len(packets)} paquets")
-    return packets
-    
+def capture_and_modify_packets(interface):
+    print(f"Capture et modification de paquets sur l'interface {interface}")
 
-def modify_packets(packets):
-    print(f"Modification de {len(packets)} paquets")
-    for packet in packets:
-        
-        if packet.hashlayer(IP):
-            print(f"packet avant modification: {packet.summary()}")
+    def packet_handler(packet):
+        if packet.haslayer(IP):
+            # Modifier l'adresse IP source
             packet[IP].src = "192.168.1.100"
-            print(f"packet après modification: {packet.summary()}")
-    return packets
-            
+            print(f"Paquet modifié: {packet.summary()}")
+
+    sniff(iface=interface, prn=packet_handler)
+
+def start_capture_thread(interface):
+    capture_thread = threading.Thread(target=capture_and_modify_packets, args=(interface,))
+    capture_thread.daemon = True 
+    capture_thread.start()
+    print(f"Thread de capture démarré sur l'interface {interface}")
 
 
 def redirect_requests():
@@ -91,8 +91,7 @@ def main():
         create_access_point(args.interface)
     
     if args.capture:
-        packets = capture_packets(args.interface)
-        modify_packets(packets)
+        start_capture_thread(args.interface)
     
     if args.redirect:
         redirect_requests()

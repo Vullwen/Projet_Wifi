@@ -5,45 +5,20 @@ from scapy.all import *
 
 def create_access_point(interface):
     print(f"Création d'un point d'acces wifi sur l'interface {interface}")
-    ssid = "FreeWifi :D"
-    password = "test"
-    channel = 6
-    
-    # Configuration de l'interface
-    hostapd_config = f"""
-    interface={interface}
-    ssid={ssid}
-    hw_mode=g
-    channel={channel}
-    wmm_enabled=0
-    macaddr_acl=0
-    auth_algs=1
-    ignore_broadcast_ssid=0
-    wpa=2
-    wpa_passphrase={password}
-    wpa_key_mgmt=WPA-PSK
-    rsn_pairwise=CCMP
-    """
-    
-    with open("/tmp/hostapd.conf", "w") as config_file:
-        config_file.write(hostapd_config)
-        
-    dnsmask_config = f"""
-    interface={interface}
-    dhcp-range=192.168.150.10,192.168.150.50,255.255.255.0,12h
-    """
-    
-    with open("/tmp/dnsmasq.conf", "w") as config_file:
-        config_file.write(dnsmask_config)
-        
-    # Démarrage des services
     try:
-        subprocess.run(["sudo", "hostapd", "/tmp/hostapd.conf"], check=True)
-        print(f"Point d'acces wifi {ssid} démarré avec succès sur l'interface {interface}")
-        
-        subprocess.run(["sudo", "dnsmasq", "-C", "/tmp/dnsmasq.conf", "-d"], check=True)
-        print("Serveur DHCP démarré avec succès") 
-        
+        sender_mac = RandMAC()
+        ssid = "FreeWifi :D" 
+        # 802.11 frame
+        dot11 = Dot11(type=0, subtype=8, addr1="ff:ff:ff:ff:ff:ff", addr2=sender_mac, addr3=sender_mac)
+        # beacon layer
+        beacon = Dot11Beacon()
+        # putting ssid in the frame
+        essid = Dot11Elt(ID="SSID", info=ssid, len=len(ssid))
+        # stack all the layers and add a RadioTap
+        frame = RadioTap()/dot11/beacon/essid
+        # send the frame in layer 2 every 100 milliseconds forever
+        # using the `iface` interface
+        sendp(frame, inter=0.1, iface=interface, loop=1)
     except subprocess.CalledProcessError as e:
         print(f"Erreur lors du démarrage du point d'acces: {e}")
         

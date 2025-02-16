@@ -4,23 +4,54 @@ import argparse
 from scapy.all import *
 
 def create_access_point(interface):
-    print(f"Création d'un point d'acces wifi sur l'interface {interface}")
+    print(f"Création d'un point d'accès WiFi sur l'interface {interface}")
+    ssid = "FreeWifi :D"
+    password = "test"
+    
+    # Création du fichier de configuration hostapd pour WPA2
+    hostapd_conf = f"""
+    interface={interface}
+    driver=nl80211
+    ssid={ssid}
+    hw_mode=g
+    channel=6
+    wmm_enabled=1
+    macaddr_acl=0
+    auth_algs=1
+    ignore_broadcast_ssid=0
+    wpa=2
+    wpa_passphrase={password}
+    wpa_key_mgmt=WPA-PSK
+    wpa_pairwise=TKIP
+    rsn_pairwise=CCMP
+        """
+    
+    config_file = "/tmp/hostapd.conf"
     try:
-        sender_mac = RandMAC()
-        ssid = "FreeWifi :D" 
-        # 802.11 frame
-        dot11 = Dot11(type=0, subtype=8, addr1="ff:ff:ff:ff:ff:ff", addr2=sender_mac, addr3=sender_mac)
-        # beacon layer
-        beacon = Dot11Beacon()
-        # putting ssid in the frame
-        essid = Dot11Elt(ID="SSID", info=ssid, len=len(ssid))
-        # stack all the layers and add a RadioTap
-        frame = RadioTap()/dot11/beacon/essid
-        # send the frame in layer 2 every 100 milliseconds forever
-        # using the `iface` interface
-        sendp(frame, inter=0.1, iface=interface, loop=1)
+        with open(config_file, "w") as f:
+            f.write(hostapd_conf)
+        print(f"Fichier de configuration créé: {config_file}")
+    except Exception as e:
+        print(f"Erreur lors de la création du fichier de configuration: {e}")
+        return
+    
+    # Configuration de l'interface réseau
+    try:
+        subprocess.run(["ip", "link", "set", interface, "down"], check=True)
+        subprocess.run(["ip", "addr", "add", "10.0.0.1/24", "dev", interface], check=True)
+        subprocess.run(["ip", "link", "set", interface, "up"], check=True)
+        print(f"Interface {interface} configurée avec l'adresse 10.0.0.1/24")
     except subprocess.CalledProcessError as e:
-        print(f"Erreur lors du démarrage du point d'acces: {e}")
+        print(f"Erreur lors de la configuration de l'interface: {e}")
+        return
+    
+    # Démarrage de hostapd avec le fichier de configuration
+    try:
+        print("Démarrage de hostapd avec WPA2...")
+        subprocess.run(["hostapd", config_file], check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Erreur lors du démarrage de hostapd: {e}")
+
         
     
 
@@ -50,7 +81,6 @@ def main():
     args = parser.parse_args()
     
     if args.create:
-        print(f"Création d'un point d'acces wifi sur l'interface {args.interface}")
         create_access_point(args.interface)
     
     if args.capture:

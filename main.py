@@ -49,11 +49,24 @@ dhcp-range=192.168.150.10,192.168.150.50,255.255.255.0,12h
         
     
 
-def capture_packets():
-    print("Capture de paquets")
+def capture_packets(interface):
+    print(f"Capture de paquets sur l'interface {interface}")
+    packets = sniff(iface=interface, count=10)
+    print(f"Capture de {len(packets)} paquets")
+    return packets
+    
 
 def modify_packets(packets):
     print(f"Modification de {len(packets)} paquets")
+    for packet in packets:
+        
+        if packet.hashlayer(IP):
+            print(f"packet avant modification: {packet.summary()}")
+            packet[IP].src = "192.168.1.100"
+            print(f"packet après modification: {packet.summary()}")
+    return packets
+            
+
 
 def redirect_requests():
     print("Redirection des requêtes vers internet")
@@ -78,7 +91,8 @@ def main():
         create_access_point(args.interface)
     
     if args.capture:
-        capture_packets()
+        packets = capture_packets(args.interface)
+        modify_packets(packets)
     
     if args.redirect:
         redirect_requests()

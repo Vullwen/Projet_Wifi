@@ -4,7 +4,31 @@ import argparse
 from scapy.all import *
 import threading
 
+def set_interface_mode_ap(interface):
+    """
+    Configure l'interface en mode AP en tuant les processus susceptibles d'interférer
+    et en réglant le mode de l'interface.
+    """
+    print(f"Configuration de l'interface {interface} en mode AP...")
+    try:
+        # Tuer les processus pouvant interférer (ex. NetworkManager, wpa_supplicant, etc.)
+        subprocess.run(["sudo", "airmon-ng", "check", "kill"], check=True)
+        # Mettre l'interface hors ligne
+        subprocess.run(["sudo", "ip", "link", "set", interface, "down"], check=True)
+        # Changer le mode de l'interface en mode AP (__ap)
+        subprocess.run(["sudo", "iw", "dev", interface, "set", "type", "__ap"], check=True)
+        # Remettre l'interface en ligne
+        subprocess.run(["sudo", "ip", "link", "set", interface, "up"], check=True)
+        print(f"Interface {interface} configurée en mode AP.")
+    except subprocess.CalledProcessError as e:
+        print(f"Erreur lors de la configuration en mode AP: {e}")
+    
+    
+
 def create_access_point(interface):
+    
+    set_interface_mode_ap(interface)
+    
     print(f"Création d'un point d'acces wifi sur l'interface {interface}")
     ssid = "FreeWifi :D"
     password = "SajedCalvitie1"

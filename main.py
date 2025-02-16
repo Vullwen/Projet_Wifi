@@ -38,10 +38,10 @@ dhcp-range=192.168.150.10,192.168.150.50,255.255.255.0,12h
         
     # Démarrage des services
     try:
-        subprocess.run(["sudo", "hostapd", "/tmp/hostapd.conf"], check=True)
+        subprocess.Popen(["sudo", "hostapd", "/tmp/hostapd.conf"], check=True)
         print(f"Point d'acces wifi {ssid} démarré avec succès sur l'interface {interface}")
         
-        subprocess.run(["sudo", "dnsmasq", "-C", "/tmp/dnsmasq.conf", "-d"], check=True)
+        subprocess.Popen(["sudo", "dnsmasq", "-C", "/tmp/dnsmasq.conf", "-d"], check=True)
         print("Serveur DHCP démarré avec succès") 
         
     except subprocess.CalledProcessError as e:

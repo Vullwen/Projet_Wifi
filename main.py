@@ -23,7 +23,7 @@ wpa=2
 wpa_passphrase={password}
 wpa_key_mgmt=WPA-PSK
 rsn_pairwise=CCMP
-    """
+"""
     
     with open("/tmp/hostapd.conf", "w") as config_file:
         config_file.write(hostapd_config)
@@ -31,7 +31,7 @@ rsn_pairwise=CCMP
     dnsmask_config = f"""
 interface={interface}
 dhcp-range=192.168.150.10,192.168.150.50,255.255.255.0,12h
-    """
+"""
     
     with open("/tmp/dnsmasq.conf", "w") as config_file:
         config_file.write(dnsmask_config)

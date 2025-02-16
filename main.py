@@ -16,7 +16,7 @@ def set_interface_mode_ap(interface):
         # Mettre l'interface hors ligne
         subprocess.run(["sudo", "ip", "link", "set", interface, "down"], check=True)
         # Changer le mode de l'interface en mode AP (__ap)
-        subprocess.run(["sudo", "iw", "dev", interface, "set", "type", "__ap"], check=True)
+        subprocess.run(["sudo", "iw", "dev", interface, "set", "type", "ap"], check=True)
         # Remettre l'interface en ligne
         subprocess.run(["sudo", "ip", "link", "set", interface, "up"], check=True)
         print(f"Interface {interface} configurée en mode AP.")

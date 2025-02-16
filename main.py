@@ -10,15 +10,15 @@ def create_access_point(interface):
     
     # Génération du fichier de configuration hostapd pour WPA (non WPA2)
     hostapd_config = f"""
-    interface={interface}
-    driver=nl80211
-    ssid={ssid}
-    hw_mode=g
-    channel=6
-    wpa=1
-    wpa_passphrase={password}
-    wpa_key_mgmt=WPA-PSK
-    wpa_pairwise=TKIP
+interface={interface}
+driver=nl80211
+ssid={ssid}
+hw_mode=g
+channel=6
+wpa=1
+wpa_passphrase={password}
+wpa_key_mgmt=WPA-PSK
+wpa_pairwise=TKIP
     """.strip()
     
     config_file = "hostapd.conf"

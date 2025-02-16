@@ -95,7 +95,12 @@ def main():
     
     if args.redirect:
         redirect_requests()
-        
+    
+    try:
+        while True:
+            pass
+    except KeyboardInterrupt:
+        print("Arrêt du script")
         
 if __name__ == "__main__":
     main()

@@ -4,54 +4,36 @@ import argparse
 from scapy.all import *
 
 def create_access_point(interface):
-    print(f"Création d'un point d'accès WiFi sur l'interface {interface}")
+    print(f"Création d'un point d'acces wifi sur l'interface {interface}")
     ssid = "FreeWifi :D"
     password = "test"
     
-    # Création du fichier de configuration hostapd pour WPA2
-    hostapd_conf = f"""
+    # Génération du fichier de configuration hostapd pour WPA (non WPA2)
+    hostapd_config = f"""
     interface={interface}
     driver=nl80211
     ssid={ssid}
     hw_mode=g
     channel=6
-    wmm_enabled=1
-    macaddr_acl=0
-    auth_algs=1
-    ignore_broadcast_ssid=0
-    wpa=2
+    wpa=1
     wpa_passphrase={password}
     wpa_key_mgmt=WPA-PSK
     wpa_pairwise=TKIP
-    rsn_pairwise=CCMP
-        """
+    """.strip()
     
-    config_file = "/tmp/hostapd.conf"
+    config_file = "hostapd.conf"
     try:
         with open(config_file, "w") as f:
-            f.write(hostapd_conf)
-        print(f"Fichier de configuration créé: {config_file}")
-    except Exception as e:
-        print(f"Erreur lors de la création du fichier de configuration: {e}")
-        return
-    
-    # Configuration de l'interface réseau
-    try:
-        subprocess.run(["ip", "link", "set", interface, "down"], check=True)
-        subprocess.run(["ip", "addr", "add", "10.0.0.1/24", "dev", interface], check=True)
-        subprocess.run(["ip", "link", "set", interface, "up"], check=True)
-        print(f"Interface {interface} configurée avec l'adresse 10.0.0.1/24")
-    except subprocess.CalledProcessError as e:
-        print(f"Erreur lors de la configuration de l'interface: {e}")
-        return
-    
-    # Démarrage de hostapd avec le fichier de configuration
-    try:
-        print("Démarrage de hostapd avec WPA2...")
+            f.write(hostapd_config)
+        print(f"Configuration hostapd écrite dans {config_file}")
+        
+        # Démarrage de hostapd avec le fichier de configuration généré
         subprocess.run(["hostapd", config_file], check=True)
+        
     except subprocess.CalledProcessError as e:
-        print(f"Erreur lors du démarrage de hostapd: {e}")
-
+        print(f"Erreur lors du démarrage du point d'acces: {e}")
+    except Exception as ex:
+        print(f"Erreur lors de l'écriture de la configuration: {ex}")
         
     
 

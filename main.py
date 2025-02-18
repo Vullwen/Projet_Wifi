@@ -13,7 +13,9 @@ def set_interface_mode_ap(interface):
     try:
         subprocess.run(["sudo", "airmon-ng", "check", "kill"], check=True)
         subprocess.run(["sudo", "ip", "link", "set", interface, "down"], check=True)
-        subprocess.run(["sudo", "iw", "dev", interface, "set", "type", "ap"], check=True)
+        # Changer le mode de l'interface en mode AP (__ap)
+        subprocess.run(["sudo", "iw", "dev", interface, "set", "type", "__ap"], check=True)
+        # Remettre l'interface en ligne
         subprocess.run(["sudo", "ip", "link", "set", interface, "up"], check=True)
         print(f"Interface {interface} configurée en mode AP.")
     except subprocess.CalledProcessError as e:

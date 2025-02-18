@@ -11,13 +11,9 @@ def set_interface_mode_ap(interface):
     """
     print(f"Configuration de l'interface {interface} en mode AP...")
     try:
-        # Tuer les processus pouvant interférer (ex. NetworkManager, wpa_supplicant, etc.)
         subprocess.run(["sudo", "airmon-ng", "check", "kill"], check=True)
-        # Mettre l'interface hors ligne
         subprocess.run(["sudo", "ip", "link", "set", interface, "down"], check=True)
-        # Changer le mode de l'interface en mode AP (__ap)
         subprocess.run(["sudo", "iw", "dev", interface, "set", "type", "ap"], check=True)
-        # Remettre l'interface en ligne
         subprocess.run(["sudo", "ip", "link", "set", interface, "up"], check=True)
         print(f"Interface {interface} configurée en mode AP.")
     except subprocess.CalledProcessError as e:
@@ -25,13 +21,11 @@ def set_interface_mode_ap(interface):
     
     
 
-def create_access_point(interface):
+def create_access_point(interface, ssid):
     
     set_interface_mode_ap(interface)
     
-    print(f"Création d'un point d'acces wifi sur l'interface {interface}")
-    ssid = "FreeWifi :D"
-    password = "SajedCalvitie1"
+    print(f"Création d'un point d'acces wifi {ssid} sur l'interface {interface}")
     channel = 6
     
     # Configuration de l'interface
@@ -45,7 +39,6 @@ macaddr_acl=0
 auth_algs=1
 ignore_broadcast_ssid=0
 wpa=2
-wpa_passphrase={password}
 wpa_key_mgmt=WPA-PSK
 rsn_pairwise=CCMP
 """
@@ -100,19 +93,20 @@ def redirect_requests():
 def main():
     # Si il n'y a pas d'arguments:
     if len(sys.argv) < 2:
-        print("Usage: python3 main.py -i <interface> [-c] [-cp] [-r]")
+        print("Usage: python3 main.py -i <interface> -n <nom du réseau> [-c] [-cp] [-r]")
         sys.exit(1)
         
     # Si il y a des arguments:
     parser = argparse.ArgumentParser(description="Script permettant de créer un RogueAP et capturer les paquets")
     parser.add_argument("-i", "--interface", required=True, help="Interface réseau")
+    parser.add_argument("-n", "--name", required=True, help="Nom du réseau")
     parser.add_argument("-c", "--create", action="store_true", help="Créer un point d'acces wifi")
     parser.add_argument("-cp", "--capture", action="store_true", help="Capturer et modifier les paquets")
     parser.add_argument("-r", "--redirect", action="store_true", help="Rediriger les requêtes vers internet")
     args = parser.parse_args()
     
     if args.create:
-        create_access_point(args.interface)
+        create_access_point(args.interface, args.name)
     
     if args.capture:
         start_capture_thread(args.interface)

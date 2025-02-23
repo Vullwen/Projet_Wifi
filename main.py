@@ -1,7 +1,10 @@
 import subprocess
 import sys
 import time
-import shutil
+import argparse
+import os
+import tempfile
+import signal
 
 ###########################################################################################
 
@@ -58,9 +61,10 @@ parser = argparse.ArgumentParser()
 parser.add_argument("wlan_interface", help="The Interface in monitor mode interface", type=str)
 parser.add_argument("inet_interface", help="The Interface in monitor mode interface", type=str)
 parser.add_argument("--ssid", help="Use this ssid for network", type=str, required=True)
-parser.add_argument("--wpa", help="Sets up an wpa(2) AP with specified passphrase", type=str, required=True)
+parser.add_argument("--wpa", help="Sets up the passphrase for the network", type=str, required=True)
 parser.add_argument("--channel", help="Use this channel", type=int, required=True)
 parser.add_argument("--sslstrip", help="Use sslstrip", action="store_true")
+parser.add_argument("--pcap", help="Save traffic to a pcap file", type=str, default="traffic.pcap")
 args = parser.parse_args()
 
 ### Run preliminary checks
@@ -132,6 +136,9 @@ def nukeall(popen_list):
 try:
     pids = []
     deathloop_count = -1
+    pcap_process = subprocess.Popen(["tcpdump", "-i", iface, "-w", args.pcap], stdout=null, stderr=null)
+    pids.append(pcap_process)
+
     while True:
         deathloop_count += 1
 

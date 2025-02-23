@@ -6,9 +6,9 @@ import os
 import tempfile
 import shutil
 
-#############################
-########## Arguments ##########
-#############################
+##############################
+########## Arguments #########
+##############################
 
 parser = argparse.ArgumentParser()
 parser.add_argument("wlanInterface", help="L'interface en mode moniteur", type=str)
@@ -20,9 +20,9 @@ parser.add_argument("--sslstrip", help="Utiliser sslstrip", action="store_true")
 parser.add_argument("--logDir", help="Répertoire pour sauvegarder les données capturées", type=str, default=".")
 args = parser.parse_args()
 
-#############################
-########## Vérifications #########
-#############################
+##############################
+######## Vérifications #######
+##############################
 
 def die(message):
     sys.stderr.write("%s\n" % message)
@@ -88,9 +88,9 @@ if not poll_iface_exists(args.wlanInterface): die("%s n'est pas une interface va
 if not poll_iface_exists(args.inetInterface): die("%s n'est pas une interface valide" % args.inetInterface)
 if (len(args.wpa) < 8) or (len(args.wpa) > 63): die("La phrase de passe WPA doit contenir entre 8 et 63 caractères")
 
-#############################
-########## Configuration #########
-#############################
+##############################
+####### Configuration ########
+##############################
 
 logTempDir = tempfile.mkdtemp()
 logPcapDir = os.path.join(logTempDir, "pcap")
@@ -137,9 +137,10 @@ def nuke_all(popenList):
             popen.kill()
     popenList.clear()
 
-#############################
-########## Boucle principale #########
-#############################
+
+##############################
+##### Boucle principale ######
+##############################
 
 try:
     pids = []
@@ -179,9 +180,9 @@ try:
 except KeyboardInterrupt:
     pass
 
-#############################
+##############################
 ########## Nettoyage #########
-#############################
+##############################
 
 print("Arrêt du Rogue AP")
 nuke_all(pids)

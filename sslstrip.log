@@ -1,0 +1,64 @@
+2025-02-23 08:25:50,852 Resolving host: connectivitycheck.gstatic.com
+2025-02-23 08:25:50,853 Host not cached.
+2025-02-23 08:25:50,872 Resolved host successfully: connectivitycheck.gstatic.com -> 142.250.178.131
+2025-02-23 08:25:50,873 Host resolution error: [Failure instance: Traceback: <class 'TypeError'>: argument should be integer or bytes-like object, not 'str'
+/usr/lib/python3/dist-packages/twisted/internet/defer.py:1088:_runCallbacks
+/usr/share/sslstrip/sslstrip/ClientRequest.py:94:handleHostResolvedSuccess
+/usr/share/sslstrip/sslstrip/ClientRequest.py:70:getPathFromUri
+]
+2025-02-23 08:25:52,842 Resolving host: 10.55.66.1
+2025-02-23 08:25:52,843 Host not cached.
+2025-02-23 08:25:52,843 Resolved host successfully: 10.55.66.1 -> 10.55.66.1
+2025-02-23 08:25:52,843 Host resolution error: [Failure instance: Traceback: <class 'TypeError'>: argument should be integer or bytes-like object, not 'str'
+/usr/lib/python3/dist-packages/twisted/internet/defer.py:1088:_runCallbacks
+/usr/share/sslstrip/sslstrip/ClientRequest.py:94:handleHostResolvedSuccess
+/usr/share/sslstrip/sslstrip/ClientRequest.py:70:getPathFromUri
+]
+2025-02-23 08:26:13,784 Resolving host: connectivitycheck.gstatic.com
+2025-02-23 08:26:13,784 Host not cached.
+2025-02-23 08:26:13,800 Resolved host successfully: connectivitycheck.gstatic.com -> 142.250.178.131
+2025-02-23 08:26:13,801 Host resolution error: [Failure instance: Traceback: <class 'TypeError'>: argument should be integer or bytes-like object, not 'str'
+/usr/lib/python3/dist-packages/twisted/internet/defer.py:1088:_runCallbacks
+/usr/share/sslstrip/sslstrip/ClientRequest.py:94:handleHostResolvedSuccess
+/usr/share/sslstrip/sslstrip/ClientRequest.py:70:getPathFromUri
+]
+2025-02-23 08:26:38,634 Resolving host: connectivitycheck.gstatic.com
+2025-02-23 08:26:38,635 Host not cached.
+2025-02-23 08:26:38,644 Resolved host successfully: connectivitycheck.gstatic.com -> 142.250.178.131
+2025-02-23 08:26:38,644 Host resolution error: [Failure instance: Traceback: <class 'TypeError'>: argument should be integer or bytes-like object, not 'str'
+/usr/lib/python3/dist-packages/twisted/internet/defer.py:1088:_runCallbacks
+/usr/share/sslstrip/sslstrip/ClientRequest.py:94:handleHostResolvedSuccess
+/usr/share/sslstrip/sslstrip/ClientRequest.py:70:getPathFromUri
+]
+2025-02-23 08:27:03,707 Resolving host: connectivitycheck.gstatic.com
+2025-02-23 08:27:03,707 Host not cached.
+2025-02-23 08:27:03,721 Resolved host successfully: connectivitycheck.gstatic.com -> 142.250.178.131
+2025-02-23 08:27:03,721 Host resolution error: [Failure instance: Traceback: <class 'TypeError'>: argument should be integer or bytes-like object, not 'str'
+/usr/lib/python3/dist-packages/twisted/internet/defer.py:1088:_runCallbacks
+/usr/share/sslstrip/sslstrip/ClientRequest.py:94:handleHostResolvedSuccess
+/usr/share/sslstrip/sslstrip/ClientRequest.py:70:getPathFromUri
+]
+2025-02-23 08:27:06,803 Resolving host: www.google.com
+2025-02-23 08:27:06,803 Host not cached.
+2025-02-23 08:27:06,826 Resolved host successfully: www.google.com -> 142.250.74.228
+2025-02-23 08:27:06,826 Host resolution error: [Failure instance: Traceback: <class 'TypeError'>: argument should be integer or bytes-like object, not 'str'
+/usr/lib/python3/dist-packages/twisted/internet/defer.py:1088:_runCallbacks
+/usr/share/sslstrip/sslstrip/ClientRequest.py:94:handleHostResolvedSuccess
+/usr/share/sslstrip/sslstrip/ClientRequest.py:70:getPathFromUri
+]
+2025-02-23 08:27:44,158 Resolving host: connectivitycheck.gstatic.com
+2025-02-23 08:27:44,159 Host not cached.
+2025-02-23 08:27:44,170 Resolved host successfully: connectivitycheck.gstatic.com -> 142.250.178.131
+2025-02-23 08:27:44,170 Host resolution error: [Failure instance: Traceback: <class 'TypeError'>: argument should be integer or bytes-like object, not 'str'
+/usr/lib/python3/dist-packages/twisted/internet/defer.py:1088:_runCallbacks
+/usr/share/sslstrip/sslstrip/ClientRequest.py:94:handleHostResolvedSuccess
+/usr/share/sslstrip/sslstrip/ClientRequest.py:70:getPathFromUri
+]
+2025-02-23 08:27:45,810 Resolving host: 10.55.66.1
+2025-02-23 08:27:45,811 Host not cached.
+2025-02-23 08:27:45,811 Resolved host successfully: 10.55.66.1 -> 10.55.66.1
+2025-02-23 08:27:45,811 Host resolution error: [Failure instance: Traceback: <class 'TypeError'>: argument should be integer or bytes-like object, not 'str'
+/usr/lib/python3/dist-packages/twisted/internet/defer.py:1088:_runCallbacks
+/usr/share/sslstrip/sslstrip/ClientRequest.py:94:handleHostResolvedSuccess
+/usr/share/sslstrip/sslstrip/ClientRequest.py:70:getPathFromUri
+]
